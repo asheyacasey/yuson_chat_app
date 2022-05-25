@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1006802078948",
+    "project_id": "my-chat-app-yuson",
+    "storage_bucket": "my-chat-app-yuson.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006802078948:android:e6d4c9a9c07081c8a6f0f1",
+        "android_client_info": {
+          "package_name": "com.example.yuson_chat_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1006802078948-vn4oad7b5aahb8a7ju84dg7ptf6r46dn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFr6VnP0fhlgAwC6FcGikpxX_HxtZcXzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1006802078948-vn4oad7b5aahb8a7ju84dg7ptf6r46dn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
