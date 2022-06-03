@@ -3,7 +3,8 @@ import 'package:yuson_chat_app/src/controller/chat_controller.dart';
 import 'package:yuson_chat_app/src/models/chat_user_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:yuson_chat_app/src/services/image_service.dart';
+import 'package:yuson_chat_app/src/widgets/avatars.dart';
 import '../../service_locators.dart';
 import 'package:yuson_chat_app/src/controller/auth_controller.dart';
 import '../../models/chat_message_model.dart';
@@ -58,15 +59,52 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.lightBlueAccent,
         title: Text(user != null ? user!.username : '. . .'),
         actions: [
-          IconButton(
+          Builder(builder: (context) {
+            return IconButton(
               onPressed: () async {
+                Scaffold.of(context).openEndDrawer();
+              },
+              icon: const Icon(Icons.menu),
+            );
+          }),
+        ],
+      ),
+      endDrawer: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () {ImageService.updateProfileImage();},
+                    child: AvatarImage(
+                        uid: FirebaseAuth.instance.currentUser!.uid),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  UserNameFromDB(uid: FirebaseAuth.instance.currentUser!.uid)
+                ],
+              ),
+            ),
+            Expanded(
+              child: Column(
+                children: const [
+                  Text('Content'),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout_sharp),
+              title: const Text('Log out'),
+              onTap: () async {
                 _auth.logout();
               },
-              icon: const Icon(Icons.logout)),
-        ],
+            )
+          ],
+        ),
       ),
       body: SizedBox(
         height: MediaQuery.of(context).size.height,
@@ -91,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   }),
             ),
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               child: Row(
                 children: [
                   Expanded(
@@ -102,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       focusNode: _messageFN,
                       controller: _messageController,
                       decoration: const InputDecoration(
-                        hintText: "Write message...",
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(
@@ -115,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     icon: const Icon(
                       Icons.send,
-                      color: Colors.lightBlue,
+                      color: Colors.redAccent,
                     ),
                     onPressed: send,
                   )
@@ -151,8 +188,7 @@ class ChatCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          Moment.fromDateTime(chat.ts.toDate())
-              .format('MMMM dd, yyyy HH:mm aa'),
+          Moment.fromDateTime(chat.ts.toDate()).format('MMMM dd,yyyy hh:mm aa'),
           style: const TextStyle(fontSize: 10, color: Colors.blueGrey),
         ),
         Row(
@@ -170,21 +206,23 @@ class ChatCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: Row(
                       mainAxisAlignment:
-                          chat.sentBy != FirebaseAuth.instance.currentUser!.uid
-                              ? MainAxisAlignment.start
-                              : MainAxisAlignment.end,
+                      chat.sentBy != FirebaseAuth.instance.currentUser!.uid
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.end,
                       children: [
-                        FutureBuilder<ChatUser>(
-                            future: ChatUser.fromUid(uid: chat.sentBy),
-                            builder: (context, AsyncSnapshot<ChatUser> snap) {
-                              if (snap.hasData) {
-                                return Text(chat.sentBy ==
-                                        FirebaseAuth.instance.currentUser?.uid
-                                    ? 'You'
-                                    : '${snap.data?.username}');
-                              }
-                              return const Text('Getting user...');
-                            }),
+                        if (chat.sentBy !=
+                            FirebaseAuth.instance.currentUser?.uid)
+                          AvatarImage(uid: chat.sentBy, radius: 12,),
+                        if (chat.sentBy !=
+                            FirebaseAuth.instance.currentUser?.uid)
+                          const SizedBox(
+                            width: 8,
+                          ),
+                        if (chat.sentBy ==
+                            FirebaseAuth.instance.currentUser?.uid)
+                          const Text('You')
+                        else
+                          UserNameFromDB(uid: chat.sentBy),
                       ],
                     ),
                   ),
@@ -192,73 +230,109 @@ class ChatCard extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(vertical: 10),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(10)),
-                        color: chat.sentBy ==
-                                FirebaseAuth.instance.currentUser!.uid
-                            ? Colors.blueAccent
-                            : Colors.white54),
+                      borderRadius: const BorderRadius.all(Radius.circular(8)),
+                      color:
+                      chat.sentBy == FirebaseAuth.instance.currentUser!.uid
+                          ? Colors.green
+                          : Colors.grey[400],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.5),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset:
+                          const Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment:
-                          chat.sentBy == FirebaseAuth.instance.currentUser!.uid
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
+                      chat.sentBy == FirebaseAuth.instance.currentUser!.uid
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
                       children: [
                         Text(chat.message),
                         const SizedBox(
                           height: 16,
                         ),
-                        const Text('Seen by', style: TextStyle(fontSize: 10)),
+                        const Text(
+                          'Seen by',
+                          style: TextStyle(fontSize: 10),
+                        ), const SizedBox(
+                          height: 8,
+                        ),
                         Row(
                           mainAxisAlignment: chat.sentBy ==
-                                  FirebaseAuth.instance.currentUser!.uid
+                              FirebaseAuth.instance.currentUser!.uid
                               ? MainAxisAlignment.end
                               : MainAxisAlignment.start,
                           children: [
-                            for (int i = 0; i < chat.seenBy.length; i++)
-                              if (chat.seenBy[i] ==
-                                  FirebaseAuth.instance.currentUser!.uid)
-                                Text(
-                                  'You${i != chat.seenBy.length - 1 ? ', ' : ''}',
-                                  style: const TextStyle(fontSize: 10),
-                                )
-                              else
-                                FutureBuilder(
-                                    future: ChatUser.fromUid(
-                                        uid: chat.seenBy[i]),
-                                    builder: (context,
-                                        AsyncSnapshot<ChatUser> snap) {
-                                      if (snap.hasData) {
-                                        return Text(
-                                          '${snap.data?.username}${i != chat.seenBy.length - 1 ? ', ' : ''}',
-                                          style: const TextStyle(
-                                              fontSize: 10),
-                                        );
-                                      }
-                                      return const Text('');
-                                    }),
+                            for(String user in chat.seenBy)
+                              Container(margin: const EdgeInsets.symmetric(horizontal: 2),child: AvatarImage(uid: user, radius: 8,))
+                            // for (int i = 0; i < chat.seenBy.length; i++)
+                            //   if (chat.seenBy[i] ==
+                            //       FirebaseAuth.instance.currentUser!.uid)
+                            //     Text(
+                            //       'You${i != chat.seenBy.length - 1 ? ', ' : ''}',
+                            //       style: const TextStyle(fontSize: 10),
+                            //     )
+                            //   else
+                            //     FutureBuilder(
+                            //         future:
+                            //             ChatUser.fromUid(uid: chat.seenBy[i]),
+                            //         builder: (context,
+                            //             AsyncSnapshot<ChatUser> snap) {
+                            //           if (snap.hasData) {
+                            //             return Text(
+                            //               '${snap.data?.username}${i != chat.seenBy.length - 1 ? ', ' : ''}',
+                            //               style: const TextStyle(fontSize: 10),
+                            //             );
+                            //           }
+                            //           return const Text('');
+                            //         }),
                           ],
                         ),
-                        if( chat.sentBy == FirebaseAuth.instance.currentUser!.uid && chat.message!='message deleted')
-                        const SizedBox(height: 8,),
-                        if( chat.sentBy == FirebaseAuth.instance.currentUser!.uid)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(width: 4,),
-                            InkWell(
-                                onTap: (){
-                                 showDialog(context: context, builder: (dCon){
-                                   return ChatEditingDialog(chat: chat);
-                                 });
+                        if (chat.sentBy ==
+                            FirebaseAuth.instance.currentUser!.uid)
+                          const SizedBox(
+                            height: 8,
+                          ),
+                        if (chat.sentBy ==
+                            FirebaseAuth.instance.currentUser!.uid &&
+                            chat.message != 'message deleted')
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (dCon) {
+                                        return ChatEditingDialog(chat: chat);
+                                      });
                                 },
-                                child: const Icon(Icons.edit, size: 12)),
-                            const SizedBox(width: 4,),
-                            InkWell(
-                                onTap: (){},
-                                child: const Icon(Icons.delete, size: 12)),
-                          ],
-                        )
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 12,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  chat.deleteMessage();
+                                },
+                                child: const Icon(
+                                  Icons.delete,
+                                  size: 12,
+                                ),
+                              ),
+                            ],
+                          )
                       ],
                     ),
                   ),
@@ -278,42 +352,40 @@ class ChatCard extends StatelessWidget {
 
 class ChatEditingDialog extends StatefulWidget {
   final ChatMessage chat;
-  const ChatEditingDialog({ required this.chat, Key? key}) : super(key: key);
+  const ChatEditingDialog({required this.chat, Key? key}) : super(key: key);
 
   @override
-  _ChatEditingDialogState createState() => _ChatEditingDialogState();
+  State<ChatEditingDialog> createState() => _ChatEditingDialogState();
 }
 
 class _ChatEditingDialogState extends State<ChatEditingDialog> {
   late TextEditingController tCon;
   @override
-  init(){
-    tCon = TextEditingController( text: widget.chat.message);
+  initState() {
+    tCon = TextEditingController(text: widget.chat.message);
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Text('Edit message'),
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     maxLines: 5,
                     onFieldSubmitted: (String text) {
-                      widget.chat.updateMessage('[edited message]' + text);
+                      widget.chat.updateMessage('[edited message] ' + text);
                       Navigator.of(context).pop();
                     },
-
                     controller: tCon,
                     decoration: const InputDecoration(
-                      hintText: "Write message...",
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(
@@ -326,19 +398,18 @@ class _ChatEditingDialogState extends State<ChatEditingDialog> {
                 IconButton(
                   icon: const Icon(
                     Icons.send,
-                    color: Colors.lightBlue,
+                    color: Colors.redAccent,
                   ),
-                  onPressed: () {widget.chat.updateMessage('[edited message]' + tCon.text);
-                  Navigator.of(context).pop();
-                  }
+                  onPressed: () {
+                    widget.chat.updateMessage('[edited message] ' + tCon.text);
+                    Navigator.of(context).pop();
+                  },
                 )
               ],
             ),
           ],
         ),
       ),
-
     );
   }
 }
-

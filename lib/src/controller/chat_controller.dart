@@ -25,7 +25,6 @@ class ChatController with ChangeNotifier {
         message.updateSeen(FirebaseAuth.instance.currentUser!.uid);
       }
     }
-
     chats = update;
     notifyListeners();
   }

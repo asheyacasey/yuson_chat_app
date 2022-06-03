@@ -7,10 +7,10 @@ class ChatMessage {
 
   ChatMessage(
       {this.uid = '',
-      required this.sentBy,
-      this.message = '',
-      this.seenBy = const [],
-      Timestamp? ts})
+        required this.sentBy,
+        this.message = '',
+        this.seenBy = const [],
+        Timestamp? ts})
       : ts = ts ?? Timestamp.now();
 
   static ChatMessage fromDocumentSnap(DocumentSnapshot snap) {
@@ -44,11 +44,8 @@ class ChatMessage {
 
   Future deleteMessage(){
     return updateMessage('message deleted');
+
   }
-
-
-
-
 
   Map<String, dynamic> get json =>
       {'sentBy': sentBy, 'seenBy': seenBy, 'message': message, 'ts': ts};
